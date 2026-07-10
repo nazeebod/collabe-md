@@ -1,5 +1,5 @@
 FROM node:20-alpine AS base
-ARG PNPM_VERSION=10
+ARG PNPM_VERSION=10.24.0
 RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 WORKDIR /app
 
