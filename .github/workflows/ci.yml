@@ -100,12 +100,19 @@ jobs:
           docker compose build
 
       - name: Start stack
-        run: |
-          docker compose up -d
-          sleep 10
+        run: docker compose up -d
 
-      - name: Smoke test API
-        run: curl -fsS http://localhost:3001/api/health
+      - name: Wait for API
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3001/api/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose ps
+          docker compose logs
+          exit 1
 
       - name: Smoke test web
         run: curl -fsS http://localhost:5173 | grep -q "Collabe MD"

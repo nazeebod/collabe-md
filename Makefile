@@ -44,7 +44,10 @@ docker-down: ## Stop Docker Compose stack
 
 docker-smoke: docker-up ## Smoke test local Docker deployment
 	@echo "Waiting for services..."
-	@sleep 8
+	@for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do \
+		curl -fsS http://localhost:3001/api/health >/dev/null 2>&1 && break; \
+		sleep 2; \
+	done
 	curl -fsS http://localhost:3001/api/health
 	curl -fsS http://localhost:5173 | grep -q "Collabe MD"
 	@echo "Smoke test passed"

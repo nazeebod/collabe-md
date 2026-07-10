@@ -15,13 +15,14 @@ COPY apps/server ./apps/server
 RUN pnpm --filter @collabe-md/shared build
 RUN pnpm --filter @collabe-md/server build
 
+FROM build AS deploy
+RUN pnpm --filter @collabe-md/server deploy --prod --legacy /app/deploy
+
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+COPY --from=deploy /app/deploy/package.json ./
+COPY --from=deploy /app/deploy/node_modules ./node_modules
 COPY --from=build /app/apps/server/dist ./dist
-COPY --from=build /app/apps/server/package.json ./
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/packages/shared/dist ./node_modules/@collabe-md/shared/dist
-COPY --from=build /app/packages/shared/package.json ./node_modules/@collabe-md/shared/package.json
 EXPOSE 3001 3002
 CMD ["node", "dist/index.js"]
