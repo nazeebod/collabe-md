@@ -46,12 +46,12 @@ export function PresenceBar({ provider, localUser }: PresenceBarProps) {
   }, [provider]);
 
   return (
-    <div className="presence-bar" data-testid="presence-bar">
-      <span className="presence-label">Online:</span>
+    <div className="flex flex-wrap items-center gap-2" data-testid="presence-bar">
+      <span className="text-[11px] font-medium text-muted-foreground">Online:</span>
       {users.map((user) => (
         <span
           key={user.clientId}
-          className="presence-user"
+          className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-sm ring-1 ring-inset ring-white/10"
           style={{ backgroundColor: user.color }}
           data-testid="presence-user"
         >

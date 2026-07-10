@@ -60,9 +60,13 @@ docker compose up --build
 
 Open http://localhost:5173
 
+## Documentation
+
+Functional specifications and change history (Russian): [docs/README.md](docs/README.md).
+
 ## Production deploy (release images)
 
-Download a release bundle from [GitHub Releases](https://github.com/YOUR_ORG/collabe-md/releases) or pull images directly:
+Download a release bundle from [GitHub Releases](https://github.com/muroed/collabemd/releases) or pull images directly:
 
 ```bash
 # Replace OWNER and VERSION

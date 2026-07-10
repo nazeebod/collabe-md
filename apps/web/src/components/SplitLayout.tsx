@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import "./SplitLayout.css";
+import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from "react";
+import { cn } from "../shared/ui/cn";
 
 type SplitLayoutProps = {
   left: ReactNode;
   right: ReactNode;
   initialLeftPercent?: number;
+  rightScrollRef?: Ref<HTMLDivElement | null>;
 };
 
-export function SplitLayout({ left, right, initialLeftPercent = 60 }: SplitLayoutProps) {
+export function SplitLayout({ left, right, initialLeftPercent = 60, rightScrollRef }: SplitLayoutProps) {
   const [leftPercent, setLeftPercent] = useState(initialLeftPercent);
   const containerRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
@@ -36,19 +37,29 @@ export function SplitLayout({ left, right, initialLeftPercent = 60 }: SplitLayou
   }, [onMouseMove, onMouseUp]);
 
   return (
-    <div className="split-layout" ref={containerRef}>
-      <div className="split-pane split-pane-left" style={{ width: `${leftPercent}%` }}>
+    <div
+      className="flex h-full min-h-0 overflow-hidden rounded-lg border bg-card shadow-sm"
+      ref={containerRef}
+    >
+      <div className="min-h-0 min-w-0 overflow-auto border-r bg-muted/30" style={{ width: `${leftPercent}%` }}>
         {left}
       </div>
       <div
-        className="split-divider"
+        className={cn(
+          "w-1.5 shrink-0 cursor-col-resize bg-border transition-colors hover:bg-primary",
+        )}
         role="separator"
         aria-orientation="vertical"
         onMouseDown={() => {
           draggingRef.current = true;
         }}
       />
-      <div className="split-pane split-pane-right">{right}</div>
+      <div
+        ref={rightScrollRef}
+        className="min-h-0 min-w-0 flex-1 overflow-auto p-4 lg:p-6"
+      >
+        {right}
+      </div>
     </div>
   );
 }

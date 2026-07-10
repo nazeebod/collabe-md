@@ -1,10 +1,14 @@
 import { GITHUB_REPO_URL } from "../lib/config";
-import "./GitHubBanner.css";
+import { cn } from "../shared/ui/cn";
 
 export function GitHubBanner() {
   return (
     <a
-      className="github-banner"
+      className={cn(
+        "fixed bottom-4 right-4 z-40 inline-flex items-center gap-2 rounded-full border",
+        "bg-background px-3.5 py-2 text-xs font-semibold text-muted-foreground shadow-lg",
+        "transition-colors hover:border-primary/50 hover:text-foreground",
+      )}
       href={GITHUB_REPO_URL}
       target="_blank"
       rel="noopener noreferrer"
@@ -20,7 +24,7 @@ export function GitHubBanner() {
 function GitHubIcon() {
   return (
     <svg
-      className="github-banner__icon"
+      className="h-4 w-4 shrink-0"
       viewBox="0 0 16 16"
       width="16"
       height="16"

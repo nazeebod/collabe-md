@@ -12,11 +12,44 @@ type MarkdownEditorProps = {
   ytext: Y.Text;
   provider: HocuspocusProvider;
   className?: string;
+  onViewReady?: (view: EditorView | null) => void;
 };
 
-export function MarkdownEditor({ ytext, provider, className }: MarkdownEditorProps) {
+const editorTheme = EditorView.theme({
+  "&": {
+    height: "100%",
+    backgroundColor: "var(--color-card)",
+    color: "var(--color-foreground)",
+  },
+  ".cm-scroller": {
+    overflow: "auto",
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    lineHeight: "1.6",
+  },
+  ".cm-gutters": {
+    backgroundColor: "var(--color-muted)",
+    color: "var(--color-muted-foreground)",
+    borderRight: "1px solid var(--color-border)",
+  },
+  ".cm-activeLine": {
+    backgroundColor: "color-mix(in oklch, var(--color-primary) 8%, transparent)",
+  },
+  ".cm-cursor": {
+    borderLeftColor: "var(--color-primary)",
+  },
+  ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": {
+    backgroundColor: "color-mix(in oklch, var(--color-primary) 22%, transparent) !important",
+  },
+});
+
+export function MarkdownEditor({ ytext, provider, className, onViewReady }: MarkdownEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const onViewReadyRef = useRef(onViewReady);
+
+  useEffect(() => {
+    onViewReadyRef.current = onViewReady;
+  }, [onViewReady]);
 
   useEffect(() => {
     if (!containerRef.current) {
@@ -35,32 +68,7 @@ export function MarkdownEditor({ ytext, provider, className }: MarkdownEditorPro
         markdown({ base: markdownLanguage, codeLanguages: languages }),
         yCollab(ytext, provider.awareness!, { undoManager }),
         EditorView.lineWrapping,
-        EditorView.theme({
-          "&": {
-            height: "100%",
-            backgroundColor: "#1e2433",
-            color: "#eef1f8",
-          },
-          ".cm-scroller": {
-            overflow: "auto",
-            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-            lineHeight: "1.6",
-          },
-          ".cm-gutters": {
-            backgroundColor: "#171b26",
-            color: "#6b758c",
-            borderRight: "1px solid #232936",
-          },
-          ".cm-activeLine": {
-            backgroundColor: "rgba(108, 140, 255, 0.08)",
-          },
-          ".cm-cursor": {
-            borderLeftColor: "#8aa4ff",
-          },
-          ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": {
-            backgroundColor: "rgba(108, 140, 255, 0.22) !important",
-          },
-        }),
+        editorTheme,
       ],
     });
 
@@ -70,13 +78,19 @@ export function MarkdownEditor({ ytext, provider, className }: MarkdownEditorPro
     });
 
     viewRef.current = view;
+    onViewReadyRef.current?.(view);
 
     return () => {
+      onViewReadyRef.current?.(null);
       view.destroy();
       viewRef.current = null;
       undoManager.destroy();
     };
   }, [provider, ytext]);
 
-  return <div ref={containerRef} className={className} data-testid="markdown-editor" />;
+  return (
+    <div ref={containerRef} className={className} data-testid="markdown-editor">
+      <style>{`.cm-editor { height: 100%; }`}</style>
+    </div>
+  );
 }
