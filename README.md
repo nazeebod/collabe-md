@@ -62,7 +62,8 @@ Open http://localhost:5173
 
 ## Documentation
 
-Functional specifications and change history (Russian): [docs/README.md](docs/README.md).
+- **User guide (Russian):** [docs/Использование/Использование.md](docs/Использование/Использование.md) — create a document, share a link, theme, recent documents
+- **Specs and change history (Russian):** [docs/README.md](docs/README.md)
 
 ## Production deploy (release images)
 
