@@ -51,25 +51,27 @@ export function HomePage() {
             Create a markdown document, share the link, and edit together with live cursors.
             No accounts — just a secure link.
           </p>
-          <Link
-            to="/help"
-            className="mb-8 inline-block text-sm font-medium text-primary hover:text-primary/80"
-            data-testid="help-page-link"
-          >
-            Как пользоваться →
-          </Link>
-          <button
-            type="button"
-            onClick={handleCreate}
-            disabled={loading}
-            data-testid="create-document"
-            className={cn(
-              "rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm",
-              "transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50",
-            )}
-          >
-            {loading ? "Creating..." : "Create document"}
-          </button>
+          <div className="flex flex-col items-center gap-6">
+            <Link
+              to="/help"
+              className="text-sm font-medium text-primary hover:text-primary/80"
+              data-testid="help-page-link"
+            >
+              Как пользоваться →
+            </Link>
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={loading}
+              data-testid="create-document"
+              className={cn(
+                "rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm",
+                "transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50",
+              )}
+            >
+              {loading ? "Creating..." : "Create document"}
+            </button>
+          </div>
           {error && (
             <p className="mt-4 text-sm text-destructive">{error}</p>
           )}
