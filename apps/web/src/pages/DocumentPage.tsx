@@ -10,6 +10,7 @@ import { useEditorPreviewScrollSync } from "../hooks/useEditorPreviewScrollSync"
 import { getDocument, updateDocumentTitle } from "../lib/api";
 import { addRecentDocument } from "../lib/recentDocuments";
 import { cn } from "../shared/ui/cn";
+import { HelpLink } from "../shared/ui/HelpLink";
 import { ThemeToggle } from "../shared/ui/ThemeToggle";
 
 export function DocumentPage() {
@@ -131,6 +132,7 @@ export function DocumentPage() {
                 {copyMessage}
               </span>
             )}
+            <HelpLink />
             <ThemeToggle />
           </div>
         </div>

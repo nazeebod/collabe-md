@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { GitHubBanner } from "../components/GitHubBanner";
 import { RecentDocuments } from "../components/RecentDocuments";
 import { createDocument } from "../lib/api";
 import { addRecentDocument } from "../lib/recentDocuments";
 import { cn } from "../shared/ui/cn";
+import { HelpLink } from "../shared/ui/HelpLink";
 import { ThemeToggle } from "../shared/ui/ThemeToggle";
 
 export function HomePage() {
@@ -35,7 +36,8 @@ export function HomePage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-background">
-      <header className="flex justify-end px-4 py-2">
+      <header className="flex items-center justify-end gap-1 px-4 py-2">
+        <HelpLink />
         <ThemeToggle />
       </header>
       <div className="flex flex-1 items-center justify-center p-6 pb-20">
@@ -45,10 +47,17 @@ export function HomePage() {
             Real-time collaboration
           </span>
           <h1 className="mb-3 text-3xl font-bold tracking-tight">Collabe MD</h1>
-          <p className="mb-8 text-sm leading-relaxed text-muted-foreground">
+          <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
             Create a markdown document, share the link, and edit together with live cursors.
             No accounts — just a secure link.
           </p>
+          <Link
+            to="/help"
+            className="mb-8 inline-block text-sm font-medium text-primary hover:text-primary/80"
+            data-testid="help-page-link"
+          >
+            Как пользоваться →
+          </Link>
           <button
             type="button"
             onClick={handleCreate}
