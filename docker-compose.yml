@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: collabe
+      POSTGRES_PASSWORD: collabe
+      POSTGRES_DB: collabe_md
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U collabe -d collabe_md"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://collabe:collabe@postgres:5432/collabe_md
+      PORT: 3001
+      WS_PORT: 3002
+      CORS_ORIGIN: http://localhost:5173
+    ports:
+      - "3001:3001"
+      - "3002:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+
+volumes:
+  pgdata:

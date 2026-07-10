@@ -1,0 +1,77 @@
+---
+description: How to cut and publish Collabe MD releases (semver tags, GHCR, GitHub Releases)
+globs: Makefile,.github/workflows/**,deploy/**
+alwaysApply: false
+---
+
+# Collabe MD — release workflow
+
+Use when the user asks to create, tag, or publish a release.
+
+## Prerequisites
+
+- Clean working tree on `main` or `master`
+- CI green on target commit
+- `gh auth status` OK
+- Docker available for optional `make docker-smoke`
+
+## What `make release-push VERSION=X.Y.Z` triggers
+
+Workflow: `.github/workflows/release.yml` on tag `vX.Y.Z`:
+
+1. Build + unit/integration tests + Playwright E2E
+2. Push images to GHCR:
+   - `ghcr.io/<owner>/collabe-md-server:<version>`
+   - `ghcr.io/<owner>/collabe-md-web:<version>`
+3. Create GitHub Release with notes, `docker-compose.yml`, tarball, SHA256
+
+Every push/PR runs `.github/workflows/ci.yml` (build, tests, E2E, Docker smoke).
+
+## Commands
+
+```bash
+make install && make build && make test
+make test-e2e          # optional locally; required in CI
+make docker-smoke      # optional
+make release-push VERSION=1.0.0
+```
+
+Inspect-only:
+
+```bash
+make release VERSION=1.0.0    # local tag only
+make release-push VERSION=1.0.0
+make release-local VERSION=1.0.0   # local images, no registry push
+```
+
+Monitor:
+
+```bash
+gh run list --workflow=release.yml
+gh release view v1.0.0
+```
+
+## Versioning
+
+- Semver: `MAJOR.MINOR.PATCH`
+- Pre-release: `1.0.0-rc.1` (auto-marked prerelease on GitHub)
+- Tag format: `vX.Y.Z` (required `v` prefix)
+
+## Agent checklist
+
+Before `make release-push`:
+
+- [ ] README and `.env.example` up to date
+- [ ] `pnpm build` and `pnpm test` pass
+- [ ] No secrets committed
+- [ ] VERSION is semver and tag does not exist
+
+After `make release-push`:
+
+- [ ] GitHub Actions `Release` workflow succeeded
+- [ ] GHCR images exist for the version
+- [ ] Release assets attached
+
+## Rollback
+
+Deploy a previous image tag, or cut a patch release from the last known-good commit. Do not delete published tags casually.

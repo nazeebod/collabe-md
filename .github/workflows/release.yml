@@ -1,0 +1,206 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "10"
+  REGISTRY: ghcr.io
+
+jobs:
+  validate:
+    name: Validate release
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: collabe
+          POSTGRES_PASSWORD: collabe
+          POSTGRES_DB: collabe_md
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U collabe -d collabe_md"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://collabe:collabe@localhost:5432/collabe_md
+      CORS_ORIGIN: http://localhost:5173
+      WS_PORT: "3002"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm db:push
+      - run: pnpm test
+      - run: pnpm --filter @collabe-md/web exec playwright install chromium --with-deps
+      - run: pnpm --filter @collabe-md/web test:e2e
+
+  publish-images:
+    name: Publish container images
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "owner=${OWNER}" >> "$GITHUB_OUTPUT"
+          echo "server_image=${REGISTRY}/${OWNER}/collabe-md-server" >> "$GITHUB_OUTPUT"
+          echo "web_image=${REGISTRY}/${OWNER}/collabe-md-web" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push server image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/server/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.server_image }}:${{ steps.meta.outputs.version }}
+            ${{ steps.meta.outputs.server_image }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.web_image }}:${{ steps.meta.outputs.version }}
+            ${{ steps.meta.outputs.web_image }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Save image metadata
+        run: |
+          mkdir -p dist/release
+          cat > dist/release/images.env <<EOF
+          VERSION=${{ steps.meta.outputs.version }}
+          SERVER_IMAGE=${{ steps.meta.outputs.server_image }}
+          WEB_IMAGE=${{ steps.meta.outputs.web_image }}
+          EOF
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-metadata
+          path: dist/release/images.env
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: publish-images
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-metadata
+          path: dist/release
+
+      - name: Load image metadata
+        run: cat dist/release/images.env >> "$GITHUB_ENV"
+
+      - name: Render release compose file
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          sed \
+            -e "s|__SERVER_IMAGE__|${REGISTRY}/${OWNER}/collabe-md-server:${VERSION}|g" \
+            -e "s|__WEB_IMAGE__|${REGISTRY}/${OWNER}/collabe-md-web:${VERSION}|g" \
+            deploy/docker-compose.release.yml > dist/release/docker-compose.yml
+
+      - name: Package release bundle
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p dist/release/bundle
+          cp dist/release/docker-compose.yml dist/release/bundle/
+          cp .env.example dist/release/bundle/
+          cp README.md dist/release/bundle/
+          tar -czf "dist/collabe-md-${VERSION}.tar.gz" -C dist/release/bundle .
+          sha256sum "dist/collabe-md-${VERSION}.tar.gz" > "dist/collabe-md-${VERSION}.tar.gz.sha256"
+
+      - name: Generate release notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          cat > dist/RELEASE_NOTES.md <<EOF
+          ## Collabe MD v${VERSION}
+
+          Collaborative markdown editor with real-time cursors and shareable document links.
+
+          ### Container images
+
+          - \`${REGISTRY}/${OWNER}/collabe-md-server:${VERSION}\`
+          - \`${REGISTRY}/${OWNER}/collabe-md-web:${VERSION}\`
+
+          ### Quick deploy
+
+          \`\`\`bash
+          tar -xzf collabe-md-${VERSION}.tar.gz
+          cp .env.example .env
+          docker compose -f docker-compose.yml up -d
+          \`\`\`
+
+          Open http://localhost:5173
+
+          ### Verified in CI
+
+          - Build and unit/integration tests
+          - Playwright E2E: two-browser collaboration scenario
+          - Docker Compose smoke test
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Collabe MD ${{ github.ref_name }}
+          body_path: dist/RELEASE_NOTES.md
+          files: |
+            dist/collabe-md-*.tar.gz
+            dist/collabe-md-*.tar.gz.sha256
+            dist/release/docker-compose.yml
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true

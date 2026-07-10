@@ -1,0 +1,16 @@
+{
+  "name": "collabe-md",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev": "pnpm run --parallel dev",
+    "build": "pnpm run -r build",
+    "test": "pnpm run -r test",
+    "db:generate": "pnpm --filter @collabe-md/server db:generate",
+    "db:migrate": "pnpm --filter @collabe-md/server db:migrate",
+    "db:push": "pnpm --filter @collabe-md/server db:push"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

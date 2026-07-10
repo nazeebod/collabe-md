@@ -1,0 +1,98 @@
+:root {
+  color-scheme: dark;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  --bg-base: #0f1117;
+  --bg-elevated: #171b26;
+  --bg-surface: #1e2433;
+  --bg-input: #252b3b;
+  --border: #2e3648;
+  --border-subtle: #232936;
+  --text-primary: #eef1f8;
+  --text-secondary: #9aa3b8;
+  --text-muted: #6b758c;
+  --accent: #6c8cff;
+  --accent-hover: #8aa4ff;
+  --accent-muted: rgba(108, 140, 255, 0.14);
+  --success: #4ade80;
+  --warning-bg: rgba(251, 191, 36, 0.12);
+  --warning-text: #fbbf24;
+  --danger: #f87171;
+  --shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+  --radius: 12px;
+  --radius-sm: 8px;
+
+  color: var(--text-primary);
+  background-color: var(--bg-base);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(108, 140, 255, 0.18), transparent),
+    var(--bg-base);
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+input,
+textarea {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+
+input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Remote cursor styles for y-codemirror.next */
+.yRemoteSelection {
+  opacity: 0.35;
+}
+
+.yRemoteSelectionHead {
+  position: absolute;
+  border-left: 2px solid;
+  border-top: 0;
+  border-bottom: 0;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.yRemoteSelectionHead::after {
+  position: absolute;
+  top: -1.4em;
+  left: -2px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px 4px 4px 0;
+  color: #fff;
+  white-space: nowrap;
+  content: attr(data-user);
+}
